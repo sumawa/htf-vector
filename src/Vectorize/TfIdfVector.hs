@@ -1,11 +1,11 @@
 module Vectorize.TfIdfVector(
   mkTermVectorTf
-  , mkCorpusIdf
+  , mkCorpus
   , mkTermVectorTfIdf
   , TfIdf(..)
 ) where
 
-import DataTypes.TfIdfTypes (Document(..),TfData(..),IdfData(..),Term)
+import DataTypes.TfIdfTypes (TermVector(..),TfData(..),IdfData(..),Term)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -30,12 +30,12 @@ import qualified Data.Text as T
 import Data.Char (toUpper)
 
 
-data TfIdf = TfIdf {docMap :: M.Map T.Text Document
+data TfIdf = TfIdf {docMap :: M.Map T.Text TermVector
   , corpusDictionary :: M.Map T.Text IdfData
   , docCount :: Int} deriving (Show)
 
---type DocMap = M.Map T.Text Document
-emptyDoc = Document {bagOfWords = M.empty, docWordCount = 0, vectorLength = 0}
+--type DocMap = M.Map T.Text TermVector
+emptyDoc = TermVector {bagOfWords = M.empty, docWordCount = 0, vectorLength = 0}
 
 -- Map of term and TfData alias as BagOfWords
 type BagOfW = M.Map Term TfData
@@ -56,11 +56,11 @@ incCount (Just (TfData count tf tfidf) ) = (TfData (count+1) tf tfidf)
 incCount Nothing = TfData 1 0 0
 
 -- TF Computations
-mkTermVectorTf :: [Term] -> Document
+mkTermVectorTf :: [Term] -> TermVector
 mkTermVectorTf terms = doc where
   updatedBowWCount = foldl (\acc x -> evalState (incWordC x) acc) (M.empty) terms
   updatedBowWTf = evalState evaluateTfForDocS updatedBowWCount
-  doc = Document {bagOfWords = updatedBowWTf, docWordCount = M.size updatedBowWTf, vectorLength = 0}
+  doc = TermVector {bagOfWords = updatedBowWTf, docWordCount = M.size updatedBowWTf, vectorLength = 0}
 
 evaluateTfForDocS :: BagOfWState BagOfW
 evaluateTfForDocS = do
@@ -74,66 +74,60 @@ calcTf (TfData count tf tfidf) countTermsInDoc = (TfData count count tfidf)
 -- other formula for tf computation
 --calcTf (TfData count tf tfidf) countTermsInDoc = (TfData count (count/fromIntegral countTermsInDoc) tfidf)
 
+
+-- DOC FREQ AND IDF COMPUTATIONS
+
+newtype CorpusTermsIdf = CorpusTermsIdf {docTermFreq :: M.Map Term Double} deriving (Show)
+
+incCorpusTermCount :: [T.Text] -> M.Map T.Text Double
+incCorpusTermCount (x:xs) = foldl (\acc x -> M.insertWith (+) x 1 acc) M.empty (x:xs)
+
 -- | compute inverse document frequency of each term within the corpus.
 --
 -- The inverse document frequency is a measure of how much information the word provides,
 --
 -- Idf represents popularity of a "term" relative to the corpus.
-mkCorpusIdf :: TfIdf -> TfIdf
-mkCorpusIdf t =  evalState corpusIdfState t
+mkCorpus ::  [T.Text] -> Int -> CorpusTermsIdf
+mkCorpus txts docCount =  evalState (corpusTokenState docCount) txts
 
-corpusIdfState :: State TfIdf TfIdf
-corpusIdfState = do
-  tfidf <- get
-  let corpusWords = (corpusDictionary tfidf)
-  let dm = (docMap tfidf)
-  let totalDocCount = (docCount tfidf)
-  let setOfTermsInEachDoc = M.foldrWithKey (\k (Document bagOfWords docWordCount vectorLength) acc -> (M.keysSet bagOfWords ) : acc ) [] dm
-  let idfDataWithDocFreq = foldl (\acc keyset -> countDocFreq keyset acc) M.empty setOfTermsInEachDoc
-  let idfDataWithIdf = updateCorpusWordsWithIdf idfDataWithDocFreq totalDocCount
-  return (TfIdf {docMap = dm
-            , corpusDictionary = idfDataWithIdf
-            , docCount = totalDocCount})
+corpusTokenState :: Int -> State [T.Text] CorpusTermsIdf
+corpusTokenState docCount = do
+  corpusTokens <- get
+  let docFreq = incCorpusTermCount corpusTokens
+  let corpusDataWithIdf = updateIdfMap docFreq docCount
+  return $ CorpusTermsIdf corpusDataWithIdf
 
-countDocFreq :: S.Set Term -> M.Map Term IdfData -> M.Map Term IdfData
-countDocFreq keys idfMap = foldl (\acc k -> M.insert k (incrementDfCount (M.lookup k idfMap) ) acc ) (idfMap) keys
+updateIdfMap :: M.Map T.Text Double -> Int -> M.Map T.Text Double
+updateIdfMap mp docCount = M.foldrWithKey (\k v res -> M.insert k (calcIdfDouble v docCount) res ) (M.empty) mp
 
-incrementDfCount (Just (IdfData dfCount idf) ) = (IdfData (dfCount+1) idf)
-incrementDfCount Nothing = IdfData 1 0
+calcIdfDouble :: Double -> Int -> Double
+calcIdfDouble termDocFreq corpusDocCount = abs $ logBase (2.718281828459) ( ( fromIntegral (corpusDocCount) +1) /termDocFreq+1 )
 
-updateCorpusWordsWithIdf :: M.Map T.Text IdfData -> Int -> M.Map T.Text IdfData
-updateCorpusWordsWithIdf mp docCount = M.foldrWithKey (\k v res -> M.insert k (calcIdf v docCount) res ) (M.empty) mp
-
-calcIdf :: IdfData -> Int -> IdfData
-calcIdf (IdfData count idf) corpusDocCount = IdfData count ( abs $ logBase (2.718281828459) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
---calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (10) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
---calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (2) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
-
--- Compute TfIdf
+--  FINAL TFIDF COMPUTATION
 -- | Compute tf X idf values
 --
 --  The final TfIdf value of the term within the document "within" the "corpus"
 --
-mkTermVectorTfIdf :: TfIdf -> TfIdf
-mkTermVectorTfIdf t = evalState termVectorTfIdfState t
+mkTermVectorTfIdf :: CorpusTermsIdf -> M.Map T.Text TermVector -> M.Map T.Text TermVector
+mkTermVectorTfIdf t = evalState (termVectorTfIdfState t)
 
-termVectorTfIdfState :: State TfIdf TfIdf
-termVectorTfIdfState = do
-  tfidf <- get
-  let corpusWords = (corpusDictionary tfidf)
-  let dm = (docMap tfidf)
-  let totalDocCount = (docCount tfidf)
-  let updatedDocMap = M.foldrWithKey (\k v res -> M.insert k (updateDocTfIdf v corpusWords) res ) (M.empty) dm
-  return (TfIdf {docMap = updatedDocMap
-            , corpusDictionary = corpusWords
-            , docCount = totalDocCount})
+termVectorTfIdfState :: CorpusTermsIdf -> State (M.Map T.Text TermVector) (M.Map T.Text TermVector)
+termVectorTfIdfState corpusTerms = do
+  titleTermVectorMap <- get
+  let corpusWords = (docTermFreq corpusTerms)
+  let updatedDocMap = M.foldrWithKey (\k v res -> M.insert k (updateDocTfIdf v corpusWords) res ) (M.empty) titleTermVectorMap
+  return updatedDocMap
 
-updateDocTfIdf :: Document -> M.Map T.Text IdfData -> Document
-updateDocTfIdf (Document bow dwCount vl) dfWordData = newTdoc where
-  updatedBow = M.foldrWithKey (\k v res -> M.insert k (calcTfIdf v (M.lookup k dfWordData)) res ) (M.empty) bow
-  newTdoc = Document updatedBow dwCount vl
+updateDocTfIdf :: TermVector -> M.Map Term Double -> TermVector
+updateDocTfIdf (TermVector bow dwCount vl) corpusWords = newTdoc where
+  updatedBow = M.foldrWithKey (\k v res -> M.insert k (calcTfIdf v (M.lookup k corpusWords)) res ) (M.empty) bow
+  newTdoc = TermVector updatedBow dwCount vl
 
-calcTfIdf :: TfData -> Maybe IdfData -> TfData
+calcTfIdf :: TfData -> Maybe Double -> TfData
 calcTfIdf (TfData count tf tfidf) maybeDfData = case maybeDfData of
-  (Just (IdfData dfCount idf)) -> (TfData count tf (count * idf) )
+  (Just idf) -> (TfData count tf (count * idf) )
   Nothing -> (TfData count tf tfidf)
+
+--calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (10) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
+--calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (2) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
+

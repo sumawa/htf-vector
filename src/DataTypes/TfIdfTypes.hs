@@ -4,7 +4,7 @@ module DataTypes.TfIdfTypes (
   TfData(..)
   , Term
   , IdfData(..)
-  , Document(..)
+  , TermVector(..)
   , CorpusData(..)
   , TfIdfEnv(..)
 ) where
@@ -40,20 +40,20 @@ data IdfData = IdfData {
   , idf :: Double             -- ^ It is the logarithmically scaled inverse fraction of the documents that contain the word (from wikipedia)
   } deriving (Show,Eq)
 
--- | Document : Represent each "document" or "sentence" or "collection of words" which is needed
--- in some kind of mathematical evaluation.
+-- | TermVector : Represent each "document" or "sentence" or "collection of words" which is being vectorized
+-- and typically used in some kind of mathematical evaluation like evaluating similiarities between text documents.
 
 -- | For example comparing two documents and finding out
 -- how "similar" they are using a mathematical model using vectors.
 -- Each document will have a bag of words "token" or "term" and its TfData (mentioned above)
-data Document = Document{
+data TermVector = TermVector{
     bagOfWords :: M.Map Term TfData -- ^ map of "tokens" and their TfData (count, tf value, and final tfidf value)
     , docWordCount :: Int           -- ^ The count of terms within this document
     , vectorLength :: Double        -- ^ will be used in computing cosine similarity in future.
 } deriving (Generic)
 
-instance Show Document where
-  show (Document bow docWc vl) = show $ T.intercalate (T.pack " --  ") txts where
+instance Show TermVector where
+  show (TermVector bow docWc vl) = show $ T.intercalate (T.pack " --  ") txts where
     txts = M.foldrWithKey (\k v res -> (k <> strToTxt "," <> strToTxt (show (tf v)) <> strToTxt "," <>  T.pack (show (tfidf v))  ) : res  ) [] bow
 
 strToTxt str = T.pack str

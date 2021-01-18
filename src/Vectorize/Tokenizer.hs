@@ -3,7 +3,7 @@ module Vectorize.Tokenizer (
   , readStopWordsText
 ) where
 
-import DataTypes.TfIdfTypes (Document(..),TfData(..),IdfData(..),Term,TfIdfEnv(..))
+import DataTypes.TfIdfTypes (TermVector(..),TfData(..),IdfData(..),Term,TfIdfEnv(..))
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T

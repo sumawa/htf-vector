@@ -1,9 +1,9 @@
 {-# LANGUAGE FlexibleContexts, DeriveGeneric, OverloadedStrings #-}
 module VectorMain where
 
-import Vectorize.TfIdfVector (TfIdf(..), mkTermVectorTf, mkCorpusIdf, mkTermVectorTfIdf)
+import Vectorize.TfIdfVector (TfIdf(..), mkTermVectorTf, mkCorpus, mkTermVectorTfIdf)
 import Vectorize.Tokenizer (tokenizeDoc,readStopWordsText)
-import DataTypes.TfIdfTypes (Document(..),TfData(..), Term,TfIdfEnv(..))
+import DataTypes.TfIdfTypes (TermVector(..),TfData(..), Term,TfIdfEnv(..))
 import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -66,7 +66,7 @@ prepareInput fp tfData tfidfI = sourceFile fp
   .| decodeUtf8C
   .| mapC ( \x ->  TfInput (T.pack fp) x tfData)
 
-getValue txt (Document bow _ _  ) = (txt,M.lookup txt bow)
+getValue txt (TermVector bow _ _  ) = (txt,M.lookup txt bow)
 
 runTfIdfNormal :: String ->  IO ()
 runTfIdfNormal input = do
@@ -81,18 +81,19 @@ runTfIdfNormal input = do
 --  load input from a source dir
   txtArr <- loadData input
   let docTokens = (fmap (\(k,t) -> (k,tokenizeDoc t stopWords)) txtArr)
+  -- | Map of feature vector like [("Doc1", [TermVector]),("Doc2",[TermVector], ...)]
   let featureVectorTuples = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t stopWords) )) txtArr)
+  let listOfAllTerms = foldl (\acc (t,txts) -> txts ++ acc) [] docTokens
   let featureVectorsMap = M.fromList (featureVectorTuples)
-
+  let totalDocCount = length txtArr
+  let corpusData = mkCorpus listOfAllTerms totalDocCount
 --  print txtDocs
-  let tfidf = TfIdf{ docMap = featureVectorsMap, corpusDictionary = M.empty, docCount = 0}
-  let tfidfWithIdf = mkCorpusIdf tfidf
-  let tfidfComputed = mkTermVectorTfIdf tfidfWithIdf
+  let tfidfComputed = mkTermVectorTfIdf corpusData featureVectorsMap
 --  print (corpusDictionary tfidfComputed)
-  TIO.writeFile "tmp/normal.txt" (T.pack $ show (docMap tfidfComputed))
+  TIO.writeFile "tmp/normal.txt" (T.pack $ show (tfidfComputed))
   return ()
 
-debugWord txt (TfIdf docMap _ _  ) = M.foldrWithKey (\k (Document bow _ _) res -> if (maybePresent (M.lookup txt bow) == 0.0) then res else (M.lookup txt bow) : res ) [] docMap
+debugWord txt (TfIdf docMap _ _  ) = M.foldrWithKey (\k (TermVector bow _ _) res -> if (maybePresent (M.lookup txt bow) == 0.0) then res else (M.lookup txt bow) : res ) [] docMap
 
 maybePresent (Just (TfData _ _ v) ) = v
 maybePresent Nothing  = 0.0
