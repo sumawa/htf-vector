@@ -1,15 +1,18 @@
-# htf-vector
+# htfidf
 
-Htf-Vector is a library for vectorizing sentences. Such vectors are useful in 
-various use cases. 
+Htfidf is a library for generating term vectors (TfIdf)
+https://en.wikipedia.org/wiki/Tf%E2%80%93idf
 
-Some of the reasons you'd like to use htf-vector are:
+Term frequency-inverse document frequency (TF-IDF) term vectors are often used to represent text documents.
 
-* vectorize blah blah
-* vectorize blah blah
-* Streaming version
+Term vectors can be used in 
 
-Check out documentation
+* performing text mining and machine learning operations. 
+* document searching
+* recommendations
+* various text analysis.
+
+Wiki
 [Documentation](https://en.wikipedia.org/wiki/Tf%E2%80%93idf).
 
 __NOTE__ This is a WIP project
@@ -21,7 +24,7 @@ __NOTE__ This is a WIP project
 
 ## Synopsis
 
-Basic examples of tf-vector usage, much more to follow!
+Basic examples of htfidf usage, much more to follow!
 
 ```haskell
 #!/usr/bin/env stack
@@ -29,23 +32,23 @@ Basic examples of tf-vector usage, much more to follow!
 import Vectorize.Tokenizer (tokenizeDoc)
 
 main = do
-    -- Pure operations: summing numbers.
+    -- Tokenize based on either externall provide stop words or "" for default
     let testStrArr = [("T1","one flesh one bone one true religion"),("T2","all flesh is grass"),("T3","one is all all is one")]
     let txtDocList = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t tfData) )) txtArr)
     let tfidfInitial = TfIdf{ docMap = M.empty, corpusDictionary = M.empty, docCount = 0}
     -- Tokenize sentences
-    let txtDocList = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t tfData) )) txtArr)
+    -- Pending
     
     return ()
 ```
 
 ## Libraries
 
-Blah blah 
+Description Pending
 
 ## Streaming version
 
-How to use streaming version
+How to use streaming version. Pending
 
 ``` haskell
 #!/usr/bin/env stack
@@ -69,7 +72,3 @@ chainedInputs tfData tfIdfInit input = runConduitRes
     
 ```
 
-Blah blah
-
-* blah blah
-* blah blah
