@@ -2,7 +2,7 @@
 module VectorMain where
 
 import Vectorize.TfIdfVector (TfIdf(..), mkTermVectorTf, mkCorpusIdf, mkTermVectorTfIdf)
-import Vectorize.Tokenizer (tokenizeDoc)
+import Vectorize.Tokenizer (tokenizeDoc,readStopWordsText)
 import DataTypes.TfIdfTypes (Document(..),TfData(..), Term,TfIdfEnv(..))
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -33,7 +33,7 @@ main = undefined
 streamingTf :: String -> IO ()
 streamingTf input = do
   stopWords <- readStopWordsText ""
-  let tfData = TfIdfEnv {stopWords = Set.fromList stopWords}
+  let tfData = TfIdfEnv {stopWords = stopWords}
   let tfidfInitial = TfIdf{ docMap = M.empty, corpusDictionary = M.empty, docCount = 0}
   chainedInputs tfData tfidfInitial input
 --  print (debugWord (T.pack "adviser") tfidfInitial)
@@ -48,7 +48,7 @@ mkTfIdfStreaming = do
     Nothing -> return ()
     Just t -> do case t of
                   TfInput ti tx en          -> yield ( cs (show (ti,doc)) :: ByteString) where
-                    terms = tokenizeDoc tx en
+                    terms = tokenizeDoc tx (stopWords en)
                     doc = mkTermVectorTf terms
                   _                         -> return ()
                  mkTfIdfStreaming
@@ -71,14 +71,14 @@ getValue txt (Document bow _ _  ) = (txt,M.lookup txt bow)
 runTfIdfNormal :: String ->  IO ()
 runTfIdfNormal input = do
   stopWords <- readStopWordsText ""
-  let tfData = TfIdfEnv {stopWords = Set.fromList stopWords}
+--  let tfData = TfIdfEnv {stopWords = stopWords}
   let tfidfInitial = TfIdf{ docMap = M.empty, corpusDictionary = M.empty, docCount = 0}
 --  let testStrArr = testStr4
 --  let txtArr = (\(t,s) -> (T.pack t, T.pack s)) <$> testStrArr
 --  txtArr <- loadData "/Users/sumantawasthi/data/test/bbc/tech"
   txtArr <- loadData input
 --  print $ typeOf txtArr
-  let txtDocList = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t tfData) )) txtArr)
+  let txtDocList = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t stopWords) )) txtArr)
 --  TIO.writeFile "tmp/normal.txt" (T.pack (show txtDocList))
   let txtDocs = M.fromList (txtDocList)
 --  print txtDocs
@@ -104,13 +104,6 @@ loadData path = do
     let prefixed = map (\x -> (T.pack x,(path ++ "/") ++ x)) files
     titleDocs <- traverse titleContentsTuple prefixed
     return titleDocs
-
-readStopWordsText :: FilePath -> IO [T.Text]
-readStopWordsText stopFile =  do
-  ls <- if (all isSpace stopFile) then
-          fmap T.lines (TIO.readFile "./tfdata/corpora/stopwords/english")
-        else fmap T.lines (TIO.readFile stopFile)
-  return (foldl (\acc x -> (T.toLower x) : acc)[] ls)
 
 testStr1 = [("T1","the man went out for a walk"),("T2","the children sat around the fire")]
 testStr2 = [("T1","It is going to rain today."),("T2","Today I am not going outside."),("T3","I am going to watch the season premiere.")]
