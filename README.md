@@ -15,7 +15,7 @@ Term vectors can be used in
 Wiki
 [Documentation](https://en.wikipedia.org/wiki/Tf%E2%80%93idf).
 
-__NOTE__ This is a WIP project
+__NOTE__ This project is WIP
 
 ## Table of Contents ##
 1. [Synopsis](#synopsis)
