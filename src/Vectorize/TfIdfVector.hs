@@ -17,6 +17,7 @@ import Data.Char
 
 import Control.Lens
 import Control.Monad.Trans.State
+import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Class (lift)
 import Data.Hashable
 
@@ -36,33 +37,40 @@ data TfIdf = TfIdf {docMap :: M.Map T.Text Document
 --type DocMap = M.Map T.Text Document
 emptyDoc = Document {bagOfWords = M.empty, docWordCount = 0, vectorLength = 0}
 
-mkTermVectorTf :: [Term] -> Document
-mkTermVectorTf terms = doc where
-  docWithWordCounts = foldl (\acc x -> evalState (incWordCounts x) acc) (emptyDoc) terms
-  docWithTfValues = evalState evaluateTfForDoc docWithWordCounts
-  doc = docWithTfValues
+-- Map of term and TfData alias as BagOfWords
+type BagOfW = M.Map Term TfData
+type BagOfWState = State BagOfW
 
-incWordCounts :: T.Text -> State Document Document
-incWordCounts t = do
-  doc <- get
-  let tokenCount = docWordCount doc
-  let bow = (bagOfWords doc)
+-- increment count of term if already exist in BagOfW Map
+incWordC :: Term -> BagOfWState BagOfW
+incWordC t = do
+  bow <- get
   let maybeElem = M.lookup t bow
   let tfData = incCount maybeElem
-  let upBow = M.insert t tfData bow
-  return (Document {bagOfWords = upBow, docWordCount = tokenCount, vectorLength = 0})
+  let updatedBow = M.insert t tfData bow
+  return updatedBow
 
 incCount (Just (TfData count tf tfidf) ) = (TfData (count+1) tf tfidf)
 incCount Nothing = TfData 1 0 0
 
-evaluateTfForDoc :: State Document Document
-evaluateTfForDoc = do
-  doc <- get
-  let bow = (bagOfWords doc)
+-- TF Computations
+mkTermVectorTf :: [Term] -> Document
+mkTermVectorTf terms = doc where
+  updatedBowWCount = foldl (\acc x -> evalState (incWordC x) acc) (M.empty) terms
+  updatedBowWTf = evalState evaluateTfForDocS updatedBowWCount
+  doc = Document {bagOfWords = updatedBowWTf, docWordCount = M.size updatedBowWTf, vectorLength = 0}
+
+evaluateTfForDocS :: BagOfWState BagOfW
+evaluateTfForDocS = do
+  bow <- get
   let tokenCount = M.size bow
---  let upBow = M.foldrWithKey (\k (TfData count tf tfidf) res -> M.insert k (TfData count (count/fromIntegral tokenCount) tfidf) res ) (M.empty) bow
-  let upBow = M.foldrWithKey (\k (TfData count tf tfidf) res -> M.insert k (TfData count count tfidf) res ) (M.empty) bow
-  return (Document {bagOfWords = upBow, docWordCount = tokenCount, vectorLength = 0})
+  let updatedBow = M.foldrWithKey (\k tfData res -> M.insert k (calcTf tfData tokenCount) res ) (M.empty) bow
+  return updatedBow
+
+calcTf :: TfData -> Int -> TfData
+calcTf (TfData count tf tfidf) countTermsInDoc = (TfData count count tfidf)
+-- other formula for tf computation
+--calcTf (TfData count tf tfidf) countTermsInDoc = (TfData count (count/fromIntegral countTermsInDoc) tfidf)
 
 -- | compute inverse document frequency of each term within the corpus.
 --
@@ -95,7 +103,7 @@ updateCorpusWordsWithIdf :: M.Map T.Text IdfData -> Int -> M.Map T.Text IdfData
 updateCorpusWordsWithIdf mp docCount = M.foldrWithKey (\k v res -> M.insert k (calcIdf v docCount) res ) (M.empty) mp
 
 calcIdf :: IdfData -> Int -> IdfData
-calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (2.718281828459) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
+calcIdf (IdfData count idf) corpusDocCount = IdfData count ( abs $ logBase (2.718281828459) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
 --calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (10) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
 --calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (2) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
 
