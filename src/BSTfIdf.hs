@@ -1,0 +1,186 @@
+--module BSTfIdf
+--    (
+--
+--    ) where
+--
+--import BSDoc (BSDoc(..),WordData1(..))
+--import qualified Data.Map as M
+--
+----import qualified Data.ByteString as T
+--import qualified Data.ByteString.Lazy.Char8 as BS
+----import qualified Data.ByteString.IO as T
+--import Control.Monad (liftM)
+--import Data.Maybe
+--
+--import Data.Char
+--import Data.Typeable
+--
+--data TfIdf1 = TfIdf1 {textDocs :: M.Map String BSDoc
+--  , allWords :: M.Map String [WordData1]
+--  , docCount :: Int} deriving (Show)
+--
+--data TfData1 = TfData1 {
+--  stopWords :: M.Map BS.ByteString BS.ByteString
+--} deriving (Show)
+--
+--type Record = BS.ByteString
+--
+--readBS fileName = do
+--  txt <- BS.readFile fileName
+--  let bsList = BS.split '\n' txt
+--
+--  return (fmap (\x -> (x,x))  bsList)
+--
+----importRecords :: String -> IO [Record]
+----importRecords filename = do
+----    liftM (map importRecord.BS.lines) (BS.readFile filename)
+----
+----importRecord :: BS.ByteString -> Record
+----importRecord txt = r
+----  where
+----    r = getField 126
+----    getField f = BS.copy $ ((BS.split '\n' txt) !! f)
+--
+--buildBSTextDoc :: IO ()
+--buildBSTextDoc = do
+--  stopWords <- readBS "./tfdata/corpora/stopwords/english"
+--  print(typeOf stopWords)
+--  let stopWordMap = M.fromList stopWords
+--  let tfData = TfData1 {stopWords = stopWordMap}
+--  let str = BS.pack "Details: Application Implementation Specialist The Ideal candidate will also possess the following skills: ¥ Able to work independently and efficiently to meet deadlines ¥ Able to promptly answer support related email, phone calls and other electronic communications ¥ Self motivated, detail-oriented and organized ¥ Excellent communication (oral and written), interpersonal, organizational, and presentation skills"
+--  print (typeOf str)
+--  let c = BS.split '\n' str
+--  print(typeOf c)
+--  let pd = processText str 1 tfData
+--  print (pd)
+----  let tfDocs =
+----  forM_ []
+--  return ()
+--
+--
+--processText :: BS.ByteString -> Int -> TfData1 -> (Int,BSDoc)
+--processText bs key tfdata = textDoc where
+--  bsList = BS.split ' ' bs
+--  filteredStrList = filter (\x -> M.notMember x (stopWords tfdata)) bsList
+--  bow = foldl (\acc x -> loadBagOfWords acc x) (M.fromList []) filteredStrList
+--  wc = length filteredStrList
+--  vl = 0.0
+--  textDoc = (key, BSDoc {bagOfWords = bow, wordCount = wc, vectorLength = vl})
+--
+--
+----readStopWordsBS stopFile =  do
+----  ls <- if (all isSpace stopFile) then
+----          fmap T.lines (T.readFile  "./tfdata/corpora/stopwords/english")
+----        else fmap T.lines (T.readFile stopFile)
+------  let l = T.unpack <$> ls
+------  print (take 10 ls)
+----  return (fmap (\x -> (x,x)) ls)
+--
+--
+--loadBagOfWords :: M.Map BS.ByteString WordData1 -> BS.ByteString -> M.Map BS.ByteString WordData1
+--loadBagOfWords mp elem  = resMp where
+--  maybeElem = M.lookup elem mp
+--  defWordData = WordData1 1.0 0.0 0.0
+--  elemVal = case maybeElem of
+--    Nothing -> defWordData
+--    Just (WordData1 count tf idf ) -> (WordData1 (count+1) tf idf)
+--  resMp = M.insert elem elemVal mp
+--
+--
+--
+--
+--
+--
+--
+--
+----module TfIdf
+----    (
+----
+----    ) where
+----
+----import TextDoc (TextDoc(..),WordData(..))
+----import qualified Data.Map as M
+----
+----import qualified Data.ByteString as T
+----import qualified Data.ByteString.IO as T
+----
+----import Data.Maybe
+----
+----import Data.Char
+----
+----data TfIdf = TfIdf {textDocs :: M.Map String TextDoc
+----  , allWords :: M.Map String [WordData]
+----  , docCount :: Int} deriving (Show)
+----
+----data TfData = TfData {
+----  stopWords :: M.Map T.ByteString T.ByteString
+----} deriving (Show)
+----
+----buildTextDoc :: IO ()
+----buildTextDoc = do
+----  stopWords <- readStopWordsText ""
+----  let stopWordMap = M.fromList stopWords
+----  let tfData = TfData {stopWords = stopWordMap}
+----  let str = T.pack "Details: Application Implementation Specialist The Ideal candidate will also possess the following skills: ¥ Able to work independently and efficiently to meet deadlines ¥ Able to promptly answer support related email, phone calls and other electronic communications ¥ Self motivated, detail-oriented and organized ¥ Excellent communication (oral and written), interpersonal, organizational, and presentation skills"
+----  let pd = processText str 1 tfData
+----  print (pd)
+------  let tfDocs =
+------  forM_ []
+----  return ()
+----
+----processText :: T.ByteString -> Int -> TfData -> (Int,TextDoc)
+----processText txt key tfdata = textDoc where
+----  txtList = T.splitOn (T.pack " ") txt
+----  filteredStrList = filter (\x -> M.notMember x (stopWords tfdata)) txtList
+----  bow = foldl (\acc x -> loadBagOfWords acc x) (M.fromList []) filteredStrList
+------  strList = T.unpack <$> T.splitOn (T.pack " ") (T.pack str)
+----  wc = length filteredStrList
+----  vl = 0.0
+----  textDoc = (key, TextDoc {bagOfWords = bow, wordCount = wc, vectorLength = vl})
+----
+----
+------processText :: String -> Int -> TfData -> (Int,TextDoc)
+------processText str key tfdata = textDoc where
+------  strList = words str
+------  filteredStrList = filter (\x -> M.notMember x (stopWords tfdata)) strList
+------  bow = foldl (\acc x -> loadBagOfWords acc x) (M.fromList []) filteredStrList
+--------  strList = T.unpack <$> T.splitOn (T.pack " ") (T.pack str)
+------  wc = length filteredStrList
+------  vl = 0.0
+------  textDoc = (key, TextDoc {bagOfWords = bow, wordCount = wc, vectorLength = vl})
+----
+----readStopWords stopFile =  do
+----  ls <- if (all isSpace stopFile) then
+----          fmap T.lines (T.readFile "./tfdata/corpora/stopwords/english")
+----        else fmap T.lines (T.readFile stopFile)
+----  let l = T.unpack <$> ls
+------  print (take 10 ls)
+----  return (fmap (\x -> (x,x)) l)
+----
+----readStopWordsText stopFile =  do
+----  ls <- if (all isSpace stopFile) then
+----          fmap T.lines (T.readFile "./tfdata/corpora/stopwords/english")
+----        else fmap T.lines (T.readFile stopFile)
+------  let l = T.unpack <$> ls
+------  print (take 10 ls)
+----  return (fmap (\x -> (x,x)) ls)
+----
+------prepareBagOfWords :: [String] -> Map String [Double] -> TfData -> Map String [Double]
+------prepareBagOfWords strList origBow tfdata = bow where
+------  filteredStrList = filter (\x -> M.member x (stopWords tfdata) && (length x > 2)) strList
+------  bow =
+----
+------loadBagOfWords :: [String] -> Map String [Double]
+------loadBagOfWords strList = foldl (\x -> ) ([]) strList
+------
+----
+------prepareTextDoc :: [String] ->
+----
+----loadBagOfWords :: M.Map T.ByteString WordData -> T.ByteString -> M.Map T.ByteString WordData
+----loadBagOfWords mp elem  = resMp where
+----  maybeElem = M.lookup elem mp
+----  defWordData = WordData 1.0 0.0 0.0
+----  elemVal = case maybeElem of
+----    Nothing -> defWordData
+----    Just (WordData count tf idf ) -> (WordData (count+1) tf idf)
+----  resMp = M.insert elem elemVal mp
