@@ -41,6 +41,8 @@ emptyDoc = Document {bagOfWords = M.empty, docWordCount = 0, vectorLength = 0}
 type BagOfW = M.Map Term TfData
 type BagOfWState = State BagOfW
 
+type DocFreq = M.Map Term Double
+
 -- increment count of term if already exist in BagOfW Map
 incWordC :: Term -> BagOfWState BagOfW
 incWordC t = do

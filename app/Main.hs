@@ -73,16 +73,19 @@ runTfIdfNormal input = do
   stopWords <- readStopWordsText ""
 --  let tfData = TfIdfEnv {stopWords = stopWords}
   let tfidfInitial = TfIdf{ docMap = M.empty, corpusDictionary = M.empty, docCount = 0}
+
 --  let testStrArr = testStr4
 --  let txtArr = (\(t,s) -> (T.pack t, T.pack s)) <$> testStrArr
---  txtArr <- loadData "/Users/sumantawasthi/data/test/bbc/tech"
+--  txtArr <- loadData "/opt/data/test/bbc/tech"
+
+--  load input from a source dir
   txtArr <- loadData input
---  print $ typeOf txtArr
-  let txtDocList = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t stopWords) )) txtArr)
---  TIO.writeFile "tmp/normal.txt" (T.pack (show txtDocList))
-  let txtDocs = M.fromList (txtDocList)
+  let docTokens = (fmap (\(k,t) -> (k,tokenizeDoc t stopWords)) txtArr)
+  let featureVectorTuples = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t stopWords) )) txtArr)
+  let featureVectorsMap = M.fromList (featureVectorTuples)
+
 --  print txtDocs
-  let tfidf = TfIdf{ docMap = txtDocs, corpusDictionary = M.empty, docCount = 0}
+  let tfidf = TfIdf{ docMap = featureVectorsMap, corpusDictionary = M.empty, docCount = 0}
   let tfidfWithIdf = mkCorpusIdf tfidf
   let tfidfComputed = mkTermVectorTfIdf tfidfWithIdf
 --  print (corpusDictionary tfidfComputed)

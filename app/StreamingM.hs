@@ -100,7 +100,7 @@
 --  let tfidfInitial = TfIdf{ docMap = M.empty, corpusDictionary = M.empty, docCount = 0}
 ----  let testStrArr = testStr4
 ----  let txtArr = (\(t,s) -> (T.pack t, T.pack s)) <$> testStrArr
-----  txtArr <- loadData "/Users/sumantawasthi/data/test/bbc/tech"
+----  txtArr <- loadData "/opt/data/test/bbc/tech"
 --  txtArr <- loadData input
 --  print $ typeOf txtArr
 --  let txtDocList = (fmap (\(k,t) -> titleDocumentPair k t tfData) txtArr)
@@ -148,7 +148,7 @@
 --
 --processTfIdfStreaming :: TfIdfEnv ->  IO ()
 --processTfIdfStreaming env =
---  runConduitRes $ sourceDirectoryDeep True "/Users/sumantawasthi/data/test/bbc/tech"
+--  runConduitRes $ sourceDirectoryDeep True "/opt/data/test/bbc/tech"
 --  .| awaitForever sourceFile
 --  .| decodeUtf8C .| peekForeverE (do
 --    liftIO $ print "NEW FILE??"
@@ -183,7 +183,7 @@
 --  let tfData = TfIdfEnv {stopWords = stopWordMap}
 ----  let testStrArr = testStr4
 ----  let txtArr = (\(t,s) -> (T.pack t, T.pack s)) <$> testStrArr
---  txtArr <- loadData "/Users/sumantawasthi/data/test/bbc/tech"
+--  txtArr <- loadData "/opt/data/test/bbc/tech"
 --  print $ typeOf txtArr
 --  let txtDocList = (fmap (\(k,t) -> titleDocumentPair k t tfData) txtArr)
 --  let txtDocs = M.fromList (txtDocList)
@@ -242,7 +242,7 @@
 ----  stopWords <- readStopWordsText ""
 ----  let stopWordMap = M.fromList stopWords
 ----  let tfData = TfIdfEnv {stopWords = stopWordMap}
-----  runConduitRes $ sourceFile "/Users/sumantawasthi/data/test/bbc/tech" .| decodeUtf8C .| peekForeverE (do
+----  runConduitRes $ sourceFile "/opt/data/test/bbc/tech" .| decodeUtf8C .| peekForeverE (do
 ----    len <- lineC lengthCE
 ------    let txtArr = ["T",line]
 ----    liftIO $ print len)
