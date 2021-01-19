@@ -64,7 +64,7 @@ Generated Hadoock documentation, figuring out how to present the link.
 
 ## Streaming version
 
-How to use streaming version. Pending
+How to use streaming version. [WIP]
 
 ``` haskell
 #!/usr/bin/env stack
