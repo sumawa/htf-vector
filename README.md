@@ -25,21 +25,28 @@ __NOTE__ This project is WIP
 ## Synopsis
 
 Basic examples of htfidf usage, much more to follow!
+One can use the steps to experiment with individual steps towards vectorization (tokenize, tf computation, corpus etc.)
+Or one can use directly available apis from ```Vectorize.VectorAPI``` packages.
 
 ```haskell
 #!/usr/bin/env stack
 -- stack script --resolver lts-16.28
 import Vectorize.Tokenizer (tokenizeDoc)
+import Vectorize.VectorAPI (tokenize,
 
-main = do
-    -- Tokenize based on either externall provide stop words or "" for default
-    let testStrArr = [("T1","one flesh one bone one true religion"),("T2","all flesh is grass"),("T3","one is all all is one")]
-    let txtDocList = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t tfData) )) txtArr)
-    let tfidfInitial = TfIdf{ docMap = M.empty, corpusDictionary = M.empty, docCount = 0}
-    -- Tokenize sentences
-    -- Pending
-    
-    return ()
+import qualified Data.Map as M
+import DataTypes.TfIdfTypes (DocTitle,TermVector(..)) 
+import Vectorize.VectorAPI (tokenize)
+import Vectorize.TfIdfVector (mkTermVectorTf, mkCorpus, mkTermVectorTfIdf)
+
+exampleTfIdf :: String -> IO (M.Map DocTitle TermVector)
+exampleTfIdf inputDir = do
+  tokenizedDocTermsPair <- tokenize inputDir
+  let featureVectorTuples = fmap (\(docTitle,terms) -> (docTitle,mkTermVectorTf terms)) tokenizedDocTermsPair
+  let featureVectorsMap = M.fromList (featureVectorTuples)
+  let corpusData = (mkCorpus featureVectorsMap (length tokenizedDocTermsPair))
+  return (mkTermVectorTfIdf corpusData featureVectorsMap )
+  
 ```
 
 ## Libraries
@@ -58,7 +65,7 @@ import Vectorize.Tokenizer (tokenizeDoc)
 
 main :: IO ()
 main = do
-    putStrLn "Streaming version:"
+    putStrLn "Streaming version is Work in pogress:"
     chainedInputs tfData tfidfInitial input
     return ()
     
