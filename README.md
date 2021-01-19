@@ -3,7 +3,7 @@
 Htfidf is a library for generating term vectors (TfIdf)
 https://en.wikipedia.org/wiki/Tf%E2%80%93idf
 
-Docs here: <link href="https://htmlpreview.github.io/?https://github.com/sumawa/htf-vector/blob/master/docindex.htm target="_blank">
+[comment]: <> Docs here: <link href="https://htmlpreview.github.io/?https://github.com/sumawa/htf-vector/blob/master/docindex.htm target="_blank">
 
 Term frequency-inverse document frequency (TF-IDF) term vectors are often used to represent text documents.
 
