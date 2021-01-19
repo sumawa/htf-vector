@@ -43,10 +43,17 @@ import Vectorize.TfIdfVector (mkTermVectorTf, mkCorpus, mkTermVectorTfIdf)
 
 exampleTfIdf :: String -> IO (M.Map DocTitle TermVector)
 exampleTfIdf inputDir = do
+  -- tokenize and generate pairs of (document title, [terms]) 
   tokenizedDocTermsPair <- tokenize inputDir
+  
+  -- generate feature vectors of document title -> TermVector 
   let featureVectorTuples = fmap (\(docTitle,terms) -> (docTitle,mkTermVectorTf terms)) tokenizedDocTermsPair
   let featureVectorsMap = M.fromList (featureVectorTuples)
+  
+  -- generate corpus data for all the documents
   let corpusData = (mkCorpus featureVectorsMap (length tokenizedDocTermsPair))
+  
+  -- generate tfidf values map of "document title" -> TermVector
   return (mkTermVectorTfIdf corpusData featureVectorsMap )
   
 ```
