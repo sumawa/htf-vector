@@ -25,7 +25,9 @@ __NOTE__ This project is WIP
 ## Synopsis
 
 Basic examples of htfidf usage, much more to follow!
+
 One can use the steps to experiment with individual steps towards vectorization (tokenize, tf computation, corpus etc.)
+
 Or one can use directly available apis from ```Vectorize.VectorAPI``` packages.
 
 ```haskell
