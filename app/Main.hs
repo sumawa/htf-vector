@@ -82,11 +82,10 @@ runTfIdfNormal input = do
   txtArr <- loadData input
   let docTokens = (fmap (\(k,t) -> (k,tokenizeDoc t stopWords)) txtArr)
   -- | Map of feature vector like [("Doc1", [TermVector]),("Doc2",[TermVector], ...)]
-  let featureVectorTuples = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t stopWords) )) txtArr)
-  let listOfAllTerms = foldl (\acc (t,txts) -> txts ++ acc) [] docTokens
+  let featureVectorTuples = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t stopWords) )) txtArr)  
   let featureVectorsMap = M.fromList (featureVectorTuples)
   let totalDocCount = length txtArr
-  let corpusData = mkCorpus listOfAllTerms totalDocCount
+  let corpusData = mkCorpus featureVectorsMap totalDocCount
 --  print txtDocs
   let tfidfComputed = mkTermVectorTfIdf corpusData featureVectorsMap
 --  print (corpusDictionary tfidfComputed)

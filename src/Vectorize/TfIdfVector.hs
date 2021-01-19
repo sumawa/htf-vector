@@ -55,6 +55,8 @@ incWordC t = do
 incCount (Just (TfData count tf tfidf) ) = (TfData (count+1) tf tfidf)
 incCount Nothing = TfData 1 0 0
 
+--incTfDataCount (TfData )
+
 -- TF Computations
 mkTermVectorTf :: [Term] -> TermVector
 mkTermVectorTf terms = doc where
@@ -79,16 +81,15 @@ calcTf (TfData count tf tfidf) countTermsInDoc = (TfData count count tfidf)
 
 newtype CorpusTermsIdf = CorpusTermsIdf {docTermFreq :: M.Map Term Double} deriving (Show)
 
-incCorpusTermCount :: [T.Text] -> M.Map T.Text Double
-incCorpusTermCount (x:xs) = foldl (\acc x -> M.insertWith (+) x 1 acc) M.empty (x:xs)
-
 -- | compute inverse document frequency of each term within the corpus.
 --
 -- The inverse document frequency is a measure of how much information the word provides,
 --
 -- Idf represents popularity of a "term" relative to the corpus.
-mkCorpus ::  [T.Text] -> Int -> CorpusTermsIdf
-mkCorpus txts docCount =  evalState (corpusTokenState docCount) txts
+mkCorpus ::  M.Map T.Text TermVector -> Int -> CorpusTermsIdf
+mkCorpus termVectorsMap docCount =  evalState (corpusTokenState docCount) (allWordsInCorpus termVectorsMap)
+
+allWordsInCorpus termVectorsMap = M.foldrWithKey (\t termVector acc -> (M.keys (bagOfWords termVector)) ++ acc) [] termVectorsMap
 
 corpusTokenState :: Int -> State [T.Text] CorpusTermsIdf
 corpusTokenState docCount = do
@@ -96,6 +97,9 @@ corpusTokenState docCount = do
   let docFreq = incCorpusTermCount corpusTokens
   let corpusDataWithIdf = updateIdfMap docFreq docCount
   return $ CorpusTermsIdf corpusDataWithIdf
+
+incCorpusTermCount :: [T.Text] -> M.Map T.Text Double
+incCorpusTermCount (x:xs) = foldl (\acc x -> M.insertWith (+) x 1 acc) M.empty (x:xs)
 
 updateIdfMap :: M.Map T.Text Double -> Int -> M.Map T.Text Double
 updateIdfMap mp docCount = M.foldrWithKey (\k v res -> M.insert k (calcIdfDouble v docCount) res ) (M.empty) mp
