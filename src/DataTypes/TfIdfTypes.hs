@@ -3,6 +3,7 @@
 module DataTypes.TfIdfTypes (
   TfData(..)
   , Term
+  , DocTitle
   , IdfData(..)
   , TermVector(..)
   , CorpusData(..)
@@ -16,6 +17,8 @@ import qualified Data.Map as M
 
 -- synonym for text will be used everywhere, a basic unit
 type Term = T.Text
+-- synonym for the title of given document containing Terms(s)
+type DocTitle = T.Text
 -- | TfData : Term frequency data which has 3 components can be used to
 -- prepare a detailed data vector for each document
 

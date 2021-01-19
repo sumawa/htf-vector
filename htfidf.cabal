@@ -27,7 +27,7 @@ source-repository head
 
 library
   exposed-modules:
-      DataTypes.TfIdfTypes, Vectorize.TfIdfVector, Vectorize.Tokenizer
+      DataTypes.TfIdfTypes, Vectorize.TfIdfVector, Vectorize.Tokenizer, Vectorize.VectorAPI
   other-modules:
       Paths_htfidf
   hs-source-dirs:
@@ -49,6 +49,7 @@ library
       , lens
       , directory
       , conduit
+      , string-conversions
   default-language: Haskell2010
 
 executable htfidf-exe

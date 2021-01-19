@@ -3,9 +3,10 @@ module Vectorize.TfIdfVector(
   , mkCorpus
   , mkTermVectorTfIdf
   , TfIdf(..)
+  , CorpusTermsIdf(..)
 ) where
 
-import DataTypes.TfIdfTypes (TermVector(..),TfData(..),IdfData(..),Term)
+import DataTypes.TfIdfTypes (TermVector(..),TfData(..),IdfData(..),Term,DocTitle)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -112,7 +113,7 @@ calcIdfDouble termDocFreq corpusDocCount = abs $ logBase (2.718281828459) ( ( fr
 --
 --  The final TfIdf value of the term within the document "within" the "corpus"
 --
-mkTermVectorTfIdf :: CorpusTermsIdf -> M.Map T.Text TermVector -> M.Map T.Text TermVector
+mkTermVectorTfIdf :: CorpusTermsIdf -> M.Map DocTitle TermVector -> M.Map DocTitle TermVector
 mkTermVectorTfIdf t = evalState (termVectorTfIdfState t)
 
 termVectorTfIdfState :: CorpusTermsIdf -> State (M.Map T.Text TermVector) (M.Map T.Text TermVector)

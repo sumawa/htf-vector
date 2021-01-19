@@ -1,9 +1,10 @@
 {-# LANGUAGE FlexibleContexts, DeriveGeneric, OverloadedStrings #-}
-module VectorMain where
 
-import Vectorize.TfIdfVector (TfIdf(..), mkTermVectorTf, mkCorpus, mkTermVectorTfIdf)
+module Vectorize.StreamingVectorAPI where
+
+import Vectorize.TfIdfVector (TfIdf(..), mkTermVectorTf, mkCorpus, mkTermVectorTfIdf,CorpusTermsIdf)
 import Vectorize.Tokenizer (tokenizeDoc,readStopWordsText)
-import DataTypes.TfIdfTypes (TermVector(..),TfData(..), Term,TfIdfEnv(..))
+import DataTypes.TfIdfTypes (TermVector(..),TfData(..), Term,TfIdfEnv(..),DocTitle)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -27,8 +28,60 @@ import Data.String.Conversions (cs)
 
 import GHC.Generics
 
-main :: IO ()
-main = undefined
+-- | Tokenize a set of "documents" (files) generating a
+-- list of pairs (DocTitle -> List of Term) where DocTitle will be the file name
+--
+-- Example:
+--
+--
+tokenize :: String -> IO [(DocTitle,[Term])]
+tokenize inputDir = do
+  stopWords <- readStopWordsText ""
+  txtArr <- loadData inputDir
+  let docTokens = (fmap (\(k,t) -> (k,tokenizeDoc t stopWords)) txtArr)
+  return docTokens
+
+-- | Generate a Map of feature vectors, like (DocTitle -> TermVector)
+-- where TermVector represents vector for each document containing bag of words and tf values
+--
+-- Example:
+--
+--
+generateFeatureVectors :: String -> IO (M.Map DocTitle TermVector)
+generateFeatureVectors inputDir = do
+  tokenizedDocTermsPair <- tokenize inputDir
+  let featureVectorTuples = fmap (\(docTitle,terms) -> (docTitle,mkTermVectorTf terms)) tokenizedDocTermsPair
+  let featureVectorsMap = M.fromList (featureVectorTuples)
+  return featureVectorsMap
+
+-- | Generate CorpusData containing a map of all the terms in the corpus
+-- and their frequencies (how many times each term appear across Documents.
+--
+-- Example:
+--
+--
+generateCorpusData :: String -> IO CorpusTermsIdf
+generateCorpusData inputDir = do
+  tokenizedDocTermsPair <- tokenize inputDir
+  let featureVectorTuples = fmap (\(docTitle,terms) -> (docTitle,mkTermVectorTf terms)) tokenizedDocTermsPair
+  let featureVectorsMap = M.fromList (featureVectorTuples)
+  return (mkCorpus featureVectorsMap (length tokenizedDocTermsPair))
+
+-- | Generate TfIdf returned as a Map of (DocTitle -> TermVector) where
+-- TermVector contains bagOfWords and each bag of words has tfidf value against the "term"
+--
+-- Example:
+--
+--
+generateTfIdf :: String -> IO (M.Map DocTitle TermVector)
+generateTfIdf inputDir = do
+  tokenizedDocTermsPair <- tokenize inputDir
+  let featureVectorTuples = fmap (\(docTitle,terms) -> (docTitle,mkTermVectorTf terms)) tokenizedDocTermsPair
+  let featureVectorsMap = M.fromList (featureVectorTuples)
+  let corpusData = (mkCorpus featureVectorsMap (length tokenizedDocTermsPair))
+  return (mkTermVectorTfIdf corpusData featureVectorsMap )
+
+
 
 streamingTf :: String -> IO ()
 streamingTf input = do
@@ -68,26 +121,6 @@ prepareInput fp tfData tfidfI = sourceFile fp
 
 getValue txt (TermVector bow _ _  ) = (txt,M.lookup txt bow)
 
-runTfIdfNormal :: String ->  IO ()
-runTfIdfNormal input = do
-  stopWords <- readStopWordsText ""
---  let tfData = TfIdfEnv {stopWords = stopWords}
---  let testStrArr = testStr4
---  let txtArr = (\(t,s) -> (T.pack t, T.pack s)) <$> testStrArr
---  txtArr <- loadData "/opt/data/test/bbc/tech"
---  load input from a source dir
-  txtArr <- loadData input
-  let docTokens = (fmap (\(k,t) -> (k,tokenizeDoc t stopWords)) txtArr)
-  -- | Map of feature vector like [("Doc1", [TermVector]),("Doc2",[TermVector], ...)]
-  let featureVectorTuples = (fmap (\(k,t) -> (k,mkTermVectorTf (tokenizeDoc t stopWords) )) txtArr)
-  let featureVectorsMap = M.fromList (featureVectorTuples)
-  let totalDocCount = length txtArr
-  let corpusData = mkCorpus featureVectorsMap totalDocCount
---  print txtDocs
-  let tfidfComputed = mkTermVectorTfIdf corpusData featureVectorsMap
---  print (corpusDictionary tfidfComputed)
-  TIO.writeFile "tmp/normal.txt" (T.pack $ show (tfidfComputed))
-  return ()
 
 debugWord txt (TfIdf docMap _ _  ) = M.foldrWithKey (\k (TermVector bow _ _) res -> if (maybePresent (M.lookup txt bow) == 0.0) then res else (M.lookup txt bow) : res ) [] docMap
 
@@ -105,9 +138,5 @@ loadData path = do
     titleDocs <- traverse titleContentsTuple prefixed
     return titleDocs
 
-testStr1 = [("T1","the man went out for a walk"),("T2","the children sat around the fire")]
-testStr2 = [("T1","It is going to rain today."),("T2","Today I am not going outside."),("T3","I am going to watch the season premiere.")]
-testStr3 = [("T1","The car is driven on the road"),("T2","The truck is driven on the highway.")]
-testStr4 = [("T1","one flesh one bone one true religion"),("T2","all flesh is grass"),("T3","one is all all is one")]
 
 
