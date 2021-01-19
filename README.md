@@ -53,7 +53,7 @@ exampleTfIdf inputDir = do
 
 ## Libraries
 
-Description Pending
+Generated Hadoock documentation, figuring out how to present the link. 
 
 ## Streaming version
 
