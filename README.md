@@ -1,4 +1,4 @@
-# htfidf
+# htfidf (Experimental and WIP)
 
 Htfidf is a library for generating term vectors (TfIdf)
 https://en.wikipedia.org/wiki/Tf%E2%80%93idf
@@ -92,4 +92,8 @@ chainedInputs tfData tfIdfInit input = runConduitRes
   .| sinkFile "tmp/op.txt"
     
 ```
-
+Pending items
+* Test coverage 
+* Streaming version 
+* Profiling 
+* How to make it Hackage worthy.
