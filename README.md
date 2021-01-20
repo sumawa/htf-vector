@@ -62,6 +62,11 @@ exampleTfIdf inputDir = do
 
 Generated Hadoock documentation, figuring out how to present the link. 
 
+Libs/Packages explored
+* mtl,transformers,conduit
+Testing frameworks
+Tasty,Quickcheck,HUnit
+
 ## Streaming version
 
 How to use streaming version. [WIP]
