@@ -28,7 +28,7 @@ data TfData = TfData {
   tfCount :: Double           -- ^ The count of terms within the document
   , tf :: Double              -- ^ term frequency computed using various formulas
   , tfidf :: Double           -- ^ The final "TfIdf" value of the term within the document "within" the "corpus"
-  } deriving (Show,Eq)
+  } deriving (Show,Eq,Read,Generic)
 
 instance Semigroup (TfData) where
   (TfData d11 d12 d13) <> (TfData d21 d22 d23) = TfData (d11+d21) (d12+d22) (d13+d23)
@@ -41,7 +41,7 @@ instance Semigroup (TfData) where
 data IdfData = IdfData {
   dfCount :: Double           -- ^ The count of terms within the "corpus" across all documents
   , idf :: Double             -- ^ It is the logarithmically scaled inverse fraction of the documents that contain the word (from wikipedia)
-  } deriving (Show,Eq)
+  } deriving (Read,Show,Eq,Generic)
 
 -- | TermVector : Represent each "document" or "sentence" or "collection of words" which is being vectorized
 -- and typically used in some kind of mathematical evaluation like evaluating similiarities between text documents.
@@ -53,7 +53,7 @@ data TermVector = TermVector{
     bagOfWords :: M.Map Term TfData -- ^ map of "tokens" and their TfData (count, tf value, and final tfidf value)
     , docWordCount :: Int           -- ^ The count of terms within this document
     , vectorLength :: Double        -- ^ will be used in computing cosine similarity in future.
-} deriving (Generic)
+} deriving (Read, Eq, Generic)
 
 instance Show TermVector where
   show (TermVector bow docWc vl) = show $ T.intercalate (T.pack " --  ") txts where

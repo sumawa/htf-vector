@@ -4,6 +4,7 @@ module Vectorize.TfIdfVector(
   , mkTermVectorTfIdf
   , TfIdf(..)
   , CorpusTermsIdf(..)
+  , getTfFromTermVector
 ) where
 
 import DataTypes.TfIdfTypes (TermVector(..),TfData(..),IdfData(..),Term,DocTitle)
@@ -30,6 +31,8 @@ import Data.Conduit
 import qualified Data.Text as T
 import Data.Char (toUpper)
 
+import Test.QuickCheck (Arbitrary(..))
+import Data.Text.Arbitrary
 
 data TfIdf = TfIdf {docMap :: M.Map T.Text TermVector
   , corpusDictionary :: M.Map T.Text IdfData
@@ -136,3 +139,13 @@ calcTfIdf (TfData count tf tfidf) maybeDfData = case maybeDfData of
 --calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (10) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
 --calcIdf (IdfData count idf) corpusDocCount = IdfData count (logBase (2) ( ( fromIntegral (corpusDocCount) +1) /(count+1) ) )
 
+instance Arbitrary TermVector where
+  arbitrary = mkTermVectorTf <$> arbitrary
+  
+getTfFromTermVector :: Term -> TermVector -> TfData
+--getTf term tv = tfVal (fromMaybe (TfData 0.0 0.0 0.0 ) $ M.lookup term (bagOfWords tv))
+getTfFromTermVector term tv = (fromMaybe (TfData 0.0 0.0 0.0 ) $ M.lookup term (bagOfWords tv))
+
+--tfVal :: TfData -> Double
+--tfVal (TfData tfc tf tfidf) = tf
+--tf term tv = HM.lookupDefault 0 term (docTermFrequencies doc)  

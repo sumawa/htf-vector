@@ -50,7 +50,7 @@ exampleTfIdf inputDir = do
   let featureVectorTuples = fmap (\(docTitle,terms) -> (docTitle,mkTermVectorTf terms)) tokenizedDocTermsPair
   let featureVectorsMap = M.fromList (featureVectorTuples)
   
-  -- generate corpus data for all the documents
+  -- generate corpus Data for all the documents
   let corpusData = (mkCorpus featureVectorsMap (length tokenizedDocTermsPair))
   
   -- generate tfidf values map of "document title" -> TermVector
